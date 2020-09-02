@@ -23,34 +23,39 @@ const handleError = (res, filepath) => err => {
 };
 
 server.on('request', (req, res) => {
-  const pathname = url.parse(req.url).pathname.slice(1);
-  const filesFolder = path.resolve(__dirname, './files');
-  const filepath = path.join(filesFolder, pathname);
+  if (req.method === 'POST') {
+    const pathname = url.parse(req.url).pathname.slice(1);
+    const filesFolder = path.resolve(__dirname, './files');
+    const filepath = path.join(filesFolder, pathname);
 
-  if (pathname.includes("/")) {
-    res.statusCode = 400;
-    res.end(JSON.stringify({error: 'Bad Request'}));
-  } else if (fs.existsSync(filepath)) {
-    res.statusCode = 409;
-    res.end(JSON.stringify({error: 'File already exists'}));
+    if (pathname.includes("/")) {
+      res.statusCode = 400;
+      res.end(JSON.stringify({error: 'Bad Request'}));
+    } else if (fs.existsSync(filepath)) {
+      res.statusCode = 409;
+      res.end(JSON.stringify({error: 'File already exists'}));
+    } else {
+      const limitStream = new LimitSizeStream({limit: 1048576, encoding: 'utf-8'});
+      const writeStream = fs.createWriteStream(filepath);
+      req.on('error', handleError(res, filepath))
+        .pipe(limitStream).on('error', handleError(res, filepath))
+        .pipe(writeStream).on('error', handleError(res, filepath));
+
+      req.on('end', () => {
+        res.statusCode = 201;
+        res.end("File successfully saved");
+      })
+
+      res.on('close', () => {
+        if (!res.finished ) {
+          writeStream.destroy();
+          removeFileSafely(filepath)
+        }
+      })
+    }
   } else {
-    const limitStream = new LimitSizeStream({limit: 1048576, encoding: 'utf-8'});
-    const writeStream = fs.createWriteStream(filepath);
-    req.on('error', handleError(res, filepath))
-      .pipe(limitStream).on('error', handleError(res, filepath))
-      .pipe(writeStream).on('error', handleError(res, filepath));
-
-    req.on('end', () => {
-      res.statusCode = 201;
-      res.end("File successfully saved");
-    })
-
-    res.on('close', () => {
-      if (!res.finished ) {
-        writeStream.destroy();
-        removeFileSafely(filepath)
-      }
-    })
+    res.statusCode = 404;
+    res.end(JSON.stringify({error: 'Not found'}))
   }
 });
 
