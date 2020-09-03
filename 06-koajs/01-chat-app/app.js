@@ -17,7 +17,6 @@ router.get('/subscribe', async (ctx, next) => {
     subscribers[subscriber_id] = message => resolve(message);
   })
   ctx.body = message;
-  return next();
 });
 
 router.post('/publish', async (ctx, next) => {
@@ -32,7 +31,6 @@ router.post('/publish', async (ctx, next) => {
   } else {
     ctx.body = "Message should not be empty";
   }
-  return next();
 });
 
 app.use(router.routes());
