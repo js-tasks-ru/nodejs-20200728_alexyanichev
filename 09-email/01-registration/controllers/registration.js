@@ -2,6 +2,17 @@ const { v4: uuid } = require('uuid');
 const User = require('../models/User');
 const sendMail = require('../libs/sendMail');
 
+module.exports = function getErrorMessagesByKeys(error) {
+  const errors = error.errors;
+  const error_keys = Object.keys(error.errors);
+  const error_messages_by_keys = {};
+  for( let error_key of error_keys ) {
+    const message = errors[error_key].properties && errors[error_key].properties.message || "Неизвестная ошибка"
+    error_messages_by_keys[error_key] = message;
+  }
+  return error_messages_by_keys;
+}
+
 module.exports.register = async (ctx, next) => {
   try {
     const {email, password, displayName} = ctx.request.body;
@@ -16,16 +27,9 @@ module.exports.register = async (ctx, next) => {
     ctx.status = 200;
     ctx.body = {status: 'ok'};
   } catch (error) {
-    const errors = error.errors;
-    if (errors) {
-      const error_keys = Object.keys(error.errors);
-      const error_messages_by_keys = {};
-      for( let error_key of error_keys ) {
-        const message = errors[error_key].properties && errors[error_key].properties.message || "Неизвестная ошибка"
-        error_messages_by_keys[error_key] = message;
-      }
+    if (error.errors) {
       ctx.status = 400;
-      ctx.body = { errors: error_messages_by_keys };
+      ctx.body = { errors: getErrorMessagesByKeys(error) };
     } else {
       ctx.status = 500;
       ctx.body = { error: "Неизвестная ошибка" };
