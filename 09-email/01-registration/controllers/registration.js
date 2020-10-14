@@ -2,7 +2,7 @@ const { v4: uuid } = require('uuid');
 const User = require('../models/User');
 const sendMail = require('../libs/sendMail');
 
-module.exports = function getErrorMessagesByKeys(error) {
+function getErrorMessagesByKeys(error) {
   const errors = error.errors;
   const error_keys = Object.keys(error.errors);
   const error_messages_by_keys = {};
@@ -56,3 +56,5 @@ module.exports.confirm = async (ctx, next) => {
     ctx.body = { error: "Неизвестная ошибка" };
   }
 };
+
+module.exports.getErrorMessagesByKeys = getErrorMessagesByKeys;

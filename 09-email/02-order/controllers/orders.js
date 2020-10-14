@@ -1,5 +1,5 @@
 const Order = require('../models/Order');
-const getErrorMessagesByKeys = require('../../01-registration/controllers/registration')
+const {getErrorMessagesByKeys} = require('../../01-registration/controllers/registration')
 const sendMail = require('../libs/sendMail');
 
 module.exports.checkout = async function checkout(ctx, next) {
